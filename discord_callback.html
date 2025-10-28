@@ -1,34 +1,33 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <h1>Authorizing Discord...</h1>
-    <script>
-      const code = new URLSearchParams(window.location.search).get("code");
-      const roblox_id = localStorage.getItem("roblox_id");
+<body>
+  <h1>Authorizing Discord...</h1>
+  <script>
+    const code = new URLSearchParams(window.location.search).get("code");
+    const roblox_id = localStorage.getItem("roblox_id");
 
-      if (!code || !roblox_id) {
-        document.body.innerHTML = "<p>Missing data.</p>";
-        throw new Error("Missing data");
-      }
+    if (!code || !roblox_id) {
+      document.body.innerHTML = "<p>Missing data.</p>";
+      throw new Error("Missing data");
+    }
 
-      // Call serverless function to exchange Discord code & trigger webhook
-      fetch(`/.netlify/functions/exchange?platform=discord&code=${code}&roblox_id=${roblox_id}`)
-        .then(r => r.json())
-        .then(data => {
-          console.log("Discord exchange result:", data);
+    // Call serverless function for Discord exchange & webhook
+    fetch(`/.netlify/functions/exchange?platform=discord&code=${code}&roblox_id=${roblox_id}`)
+      .then(r => r.json())
+      .then(data => {
+        console.log("Discord exchange result:", data);
+        if (!data.user || !data.user.id) {
+          document.body.innerHTML = "<p>Failed to get Discord ID</p>";
+          throw new Error("No Discord ID returned");
+        }
 
-          if (!data.user || !data.user.id) {
-            document.body.innerHTML = "<p>Failed to get Discord ID</p>";
-            throw new Error("No Discord ID returned");
-          }
-
-          localStorage.setItem("discord_id", data.user.id);
-          document.body.innerHTML = "<p>Successfully authorized!</p>";
-        })
-        .catch(err => {
-          console.error("Fetch error:", err);
-          document.body.innerHTML = "<p>Error fetching Discord ID</p>";
-        });
-    </script>
-  </body>
+        localStorage.setItem("discord_id", data.user.id);
+        document.body.innerHTML = "<p>Successfully authorized!</p>";
+      })
+      .catch(err => {
+        console.error("Discord fetch error:", err);
+        document.body.innerHTML = "<p>Error fetching Discord ID</p>";
+      });
+  </script>
+</body>
 </html>

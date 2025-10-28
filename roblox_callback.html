@@ -1,27 +1,34 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <h1>Authorizing Roblox...</h1>
-    <script>
-      const code = new URLSearchParams(window.location.search).get("code");
-      if (!code) {
-        document.body.innerHTML = "<p>No Roblox code found.</p>";
-        throw new Error("No code");
-      }
-      fetch(`/.netlify/functions/exchange?platform=roblox&code=${code}`)
-        .then(r => r.json())
-        .then(data => {
-          if (!data.user || !data.user.id) throw new Error("No Roblox ID returned");
-          localStorage.setItem("roblox_id", data.user.id);
+<body>
+  <h1>Authorizing Roblox...</h1>
+  <script>
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) {
+      document.body.innerHTML = "<p>No Roblox code found.</p>";
+      throw new Error("No code");
+    }
 
-          // Redirect to Discord OAuth
-          const discordUrl = `https://discord.com/oauth2/authorize?client_id=1426666764921475183&response_type=code&redirect_uri=${encodeURIComponent(location.origin + '/discord_callback.html')}&scope=identify`;
-          window.location.href = discordUrl;
-        })
-        .catch(err => {
-          console.error("Roblox fetch error:", err);
-          document.body.innerHTML = "<p>Error fetching Roblox ID</p>";
-        });
-    </script>
-  </body>
+    fetch(`/.netlify/functions/exchange?platform=roblox&code=${code}`)
+      .then(r => r.json())
+      .then(data => {
+        console.log("Roblox exchange result:", data);
+        if (!data.user || !data.user.id) {
+          document.body.innerHTML = "<p>Failed to get Roblox ID</p>";
+          throw new Error("No Roblox ID returned");
+        }
+
+        // Save Roblox ID and redirect to Discord OAuth
+        localStorage.setItem("roblox_id", data.user.id);
+
+        const DISCORD_CLIENT_ID = "1426666764921475183"; // your Discord client ID
+        const discordUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(location.origin + '/discord_callback.html')}&scope=identify`;
+        window.location.href = discordUrl;
+      })
+      .catch(err => {
+        console.error("Roblox fetch error:", err);
+        document.body.innerHTML = "<p>Error fetching Roblox ID</p>";
+      });
+  </script>
+</body>
 </html>
