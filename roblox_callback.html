@@ -10,7 +10,7 @@
       }
 
       // Exchange code for token on Netlify
-      fetch("/netlify/functions/exchange?platform=roblox&code=" + code)
+      fetch("/.netlify/functions/exchange?platform=roblox&code=" + code)
         .then(r => r.json())
         .then(data => {
           localStorage.setItem("roblox_id", data.user.id);
