@@ -11,7 +11,7 @@
         throw new Error("Missing data");
       }
 
-      fetch("/.netlify/functions/exchange?platform=discord&code=" + code + "&roblox_id=" + roblox_id)
+      fetch("/netlify/functions/exchange?platform=discord&code=" + code + "&roblox_id=" + roblox_id)
         .then(r => r.json())
         .then(() => {
           document.body.innerHTML = "<h2>✅ Successfully linked Roblox & Discord!</h2>";
