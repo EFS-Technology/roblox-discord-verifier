@@ -9,9 +9,11 @@
         throw new Error("No code");
       }
 
-      // Exchange code for token on Netlify
       fetch(`/.netlify/functions/exchange?platform=roblox&code=${code}`)
-        .then(r => r.json())
+        .then(r => {
+          console.log("Raw response:", r);
+          return r.json();
+        })
         .then(data => {
           console.log("Roblox exchange result:", data);
           if (!data.user || !data.user.id) {
@@ -22,7 +24,7 @@
           window.location.href = "/discord_callback.html";
         })
         .catch(err => {
-          console.error("Fetch error:", err);
+          console.error("Fetch or parsing error:", err);
           document.body.innerHTML = "<p>Error fetching Roblox ID</p>";
         });
     </script>
