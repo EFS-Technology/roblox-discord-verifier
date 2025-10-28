@@ -10,15 +10,20 @@
       }
 
       // Exchange code for token on Netlify
-      fetch("/.netlify/functions/exchange?platform=roblox&code=" + code)
+           fetch(`/.netlify/functions/exchange?platform=roblox&code=${code}`)
         .then(r => r.json())
         .then(data => {
+          console.log("Roblox exchange result:", data);
+          if (!data.user || !data.user.id) {
+            document.body.innerHTML = "<p>Failed to get Roblox ID</p>";
+            throw new Error("No Roblox ID returned");
+          }
           localStorage.setItem("roblox_id", data.user.id);
           window.location.href = "/discord_callback.html";
         })
         .catch(err => {
-          document.body.innerHTML = "<p>Authorization failed.</p>";
-          console.error(err);
+          console.error("Fetch error:", err);
+          document.body.innerHTML = "<p>Error fetching Roblox ID</p>";
         });
     </script>
   </body>
