@@ -10,34 +10,19 @@
         document.body.innerHTML = "<p>Missing data.</p>";
         throw new Error("Missing data");
       }
-      // Exchange Discord code for Discord ID
-      fetch(`/.netlify/functions/exchange?platform=discord&code=${code}`)
+
+      // Call serverless function to exchange Discord code & trigger webhook
+      fetch(`/.netlify/functions/exchange?platform=discord&code=${code}&roblox_id=${roblox_id}`)
         .then(r => r.json())
         .then(data => {
           console.log("Discord exchange result:", data);
+
           if (!data.user || !data.user.id) {
             document.body.innerHTML = "<p>Failed to get Discord ID</p>";
             throw new Error("No Discord ID returned");
           }
 
           localStorage.setItem("discord_id", data.user.id);
-
-          // Both Roblox and Discord IDs are now stored
-          // You can call your webhook here
-          fetch(YOUR_WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-              "Authorization": "API_KEY",
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              variables: [
-                { name: "roblox_id", variable: "{roblox_id}", value: roblox_id },
-                { name: "discord_id", variable: "{discord_id}", value: data.user.id }
-              ]
-            })
-          });
-
           document.body.innerHTML = "<p>Successfully authorized!</p>";
         })
         .catch(err => {

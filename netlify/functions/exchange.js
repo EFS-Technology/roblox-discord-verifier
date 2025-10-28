@@ -1,105 +1,110 @@
-// netlify/functions/exchange.js
-const fetch = require("node-fetch");
+const fetch = require('node-fetch');
 
-exports.handler = async (event) => {
+exports.handler = async function(event) {
   try {
-    const { code, platform } = event.queryStringParameters || {};
+    const { platform, code, roblox_id } = event.queryStringParameters || {};
+    let user = null;
 
-    if (!code || !platform) {
+    if (!platform || !code) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Missing code or platform" }),
+        body: JSON.stringify({ error: "Missing platform or code" })
       };
     }
 
     if (platform === "roblox") {
       // Exchange Roblox code for access token
-      const params = new URLSearchParams();
-      params.append("client_id", process.env.ROBLOX_CLIENT_ID);
-      params.append("client_secret", process.env.ROBLOX_CLIENT_SECRET);
-      params.append("grant_type", "authorization_code");
-      params.append("code", code);
-      params.append("redirect_uri", `${process.env.BASE_URL}/roblox_callback.html`);
-
-      const tokenRes = await fetch("https://apis.roblox.com/oauth/v1/token", {
-        method: "POST",
-        body: params,
+      const tokenRes = await fetch('https://apis.roblox.com/oauth/v1/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          client_id: process.env.ROBLOX_CLIENT_ID,
+          client_secret: process.env.ROBLOX_CLIENT_SECRET,
+          redirect_uri: `${process.env.BASE_URL}/roblox_callback.html`
+        })
       });
 
       const tokenData = await tokenRes.json();
-      console.log("Roblox token response:", tokenData);
 
       if (!tokenData.access_token) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: "No access token returned from Roblox" }),
+          body: JSON.stringify({ error: "Failed to get Roblox access token", tokenData })
         };
       }
 
-      // Fetch user info
-      const userRes = await fetch("https://apis.roblox.com/oauth/v1/userinfo", {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      // Get Roblox user info
+      const userRes = await fetch('https://apis.roblox.com/oauth/v1/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
       });
-      const userData = await userRes.json();
-      console.log("Roblox user info:", userData);
+      user = await userRes.json();
 
-      if (!userData.sub) {
+    } else if (platform === "discord") {
+      if (!roblox_id) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: "No user ID returned from Roblox" }),
+          body: JSON.stringify({ error: "Missing Roblox ID for webhook" })
         };
       }
 
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ user: { id: userData.sub } }),
-      };
-    }
-
-    if (platform === "discord") {
       // Exchange Discord code for access token
       const params = new URLSearchParams();
-      params.append("client_id", process.env.DISCORD_CLIENT_ID);
-      params.append("client_secret", process.env.DISCORD_CLIENT_SECRET);
-      params.append("grant_type", "authorization_code");
-      params.append("code", code);
-      params.append("redirect_uri", `${process.env.BASE_URL}/discord_callback.html`);
+      params.append('client_id', process.env.DISCORD_CLIENT_ID);
+      params.append('client_secret', process.env.DISCORD_CLIENT_SECRET);
+      params.append('grant_type', 'authorization_code');
+      params.append('code', code);
+      params.append('redirect_uri', `${process.env.BASE_URL}/discord_callback.html`);
 
-      const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
-        method: "POST",
+      const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
         body: params,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 
       const tokenData = await tokenRes.json();
-      console.log("Discord token response:", tokenData);
 
       if (!tokenData.access_token) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: "No access token returned from Discord" }),
+          body: JSON.stringify({ error: "Failed to get Discord access token", tokenData })
         };
       }
 
-      // Fetch Discord user info
-      const userRes = await fetch("https://discord.com/api/users/@me", {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      // Get Discord user info
+      const userRes = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
       });
-      const userData = await userRes.json();
-      console.log("Discord user info:", userData);
 
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ user: { id: userData.id } }),
-      };
+      user = await userRes.json();
+
+      // Trigger BotGhost webhook
+      await fetch(process.env.WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': process.env.WEBHOOK_AUTH,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          variables: [
+            { name: "roblox_id", variable: "{roblox_id}", value: roblox_id },
+            { name: "discord_id", variable: "{discord_id}", value: user.id }
+          ]
+        })
+      });
     }
 
     return {
-      statusCode: 400,
-      body: JSON.stringify({ error: "Unknown platform" }),
+      statusCode: 200,
+      body: JSON.stringify({ user })
     };
+
   } catch (err) {
     console.error("Exchange function error:", err);
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Internal server error", details: err.message })
+    };
   }
 };
