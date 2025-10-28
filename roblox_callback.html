@@ -15,7 +15,7 @@
           localStorage.setItem("roblox_id", data.user.id);
 
           // Redirect to Discord OAuth
-          const discordUrl = `https://discord.com/oauth2/authorize?client_id=YOUR_DISCORD_CLIENT_ID&response_type=code&redirect_uri=${encodeURIComponent(location.origin + '/discord_callback.html')}&scope=identify`;
+          const discordUrl = `https://discord.com/oauth2/authorize?client_id=1426666764921475183&response_type=code&redirect_uri=${encodeURIComponent(location.origin + '/discord_callback.html')}&scope=identify`;
           window.location.href = discordUrl;
         })
         .catch(err => {
