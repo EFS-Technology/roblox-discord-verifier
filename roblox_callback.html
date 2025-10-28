@@ -8,24 +8,27 @@
         document.body.innerHTML = "<p>No Roblox code found.</p>";
         throw new Error("No code");
       }
-
       fetch(`/.netlify/functions/exchange?platform=roblox&code=${code}`)
         .then(r => {
-          console.log("Raw response:", r);
-          return r.json();
+          console.log("Raw response status:", r.status);
+          return r.text(); // get raw text instead of JSON
         })
-        .then(data => {
-          console.log("Roblox exchange result:", data);
-          if (!data.user || !data.user.id) {
-            document.body.innerHTML = "<p>Failed to get Roblox ID</p>";
-            throw new Error("No Roblox ID returned");
+        .then(text => {
+          console.log("Raw response text:", text);
+          try {
+            const data = JSON.parse(text);
+            console.log("Parsed JSON:", data);
+            if (!data.user || !data.user.id) throw new Error("No Roblox ID returned");
+            localStorage.setItem("roblox_id", data.user.id);
+            window.location.href = "/discord_callback.html";
+          } catch(e) {
+            console.error("JSON parse error:", e);
+            document.body.innerHTML = `<p>Error parsing JSON: ${e.message}</p>`;
           }
-          localStorage.setItem("roblox_id", data.user.id);
-          window.location.href = "/discord_callback.html";
         })
         .catch(err => {
-          console.error("Fetch or parsing error:", err);
-          document.body.innerHTML = "<p>Error fetching Roblox ID</p>";
+          console.error("Fetch error:", err);
+          document.body.innerHTML = `<p>Fetch error: ${err.message}</p>`;
         });
     </script>
   </body>
