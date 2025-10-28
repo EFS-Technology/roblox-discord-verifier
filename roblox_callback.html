@@ -9,26 +9,18 @@
         throw new Error("No code");
       }
       fetch(`/.netlify/functions/exchange?platform=roblox&code=${code}`)
-        .then(r => {
-          console.log("Raw response status:", r.status);
-          return r.text(); // get raw text instead of JSON
-        })
-        .then(text => {
-          console.log("Raw response text:", text);
-          try {
-            const data = JSON.parse(text);
-            console.log("Parsed JSON:", data);
-            if (!data.user || !data.user.id) throw new Error("No Roblox ID returned");
-            localStorage.setItem("roblox_id", data.user.id);
-            window.location.href = "/discord_callback.html";
-          } catch(e) {
-            console.error("JSON parse error:", e);
-            document.body.innerHTML = `<p>Error parsing JSON: ${e.message}</p>`;
-          }
+        .then(r => r.json())
+        .then(data => {
+          if (!data.user || !data.user.id) throw new Error("No Roblox ID returned");
+          localStorage.setItem("roblox_id", data.user.id);
+
+          // Redirect to Discord OAuth
+          const discordUrl = `https://discord.com/oauth2/authorize?client_id=YOUR_DISCORD_CLIENT_ID&response_type=code&redirect_uri=${encodeURIComponent(location.origin + '/discord_callback.html')}&scope=identify`;
+          window.location.href = discordUrl;
         })
         .catch(err => {
-          console.error("Fetch error:", err);
-          document.body.innerHTML = `<p>Fetch error: ${err.message}</p>`;
+          console.error("Roblox fetch error:", err);
+          document.body.innerHTML = "<p>Error fetching Roblox ID</p>";
         });
     </script>
   </body>

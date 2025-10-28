@@ -10,7 +10,6 @@
         document.body.innerHTML = "<p>Missing data.</p>";
         throw new Error("Missing data");
       }
-
       // Exchange Discord code for Discord ID
       fetch(`/.netlify/functions/exchange?platform=discord&code=${code}`)
         .then(r => r.json())
