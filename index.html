@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Roblox → Discord Verification</title>
+  </head>
+  <body>
+    <h1>Roblox → Discord Verification</h1>
+    <button id="start">Start Verification</button>
+
+    <script>
+      document.getElementById("start").addEventListener("click", () => {
+        const ROBLOX_CLIENT_ID = "4761882716941359070";
+        const redirect = location.origin + "/roblox_callback.html";
+        const scope = "openid profile";
+        const authUrl = `https://authorize.roblox.com/?client_id=${ROBLOX_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&scope=${encodeURIComponent(scope)}`;
+        window.location.href = authUrl;
+      });
+    </script>
+  </body>
+</html>

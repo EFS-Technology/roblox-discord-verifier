@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Authorizing Discord...</h1>
+    <script>
+      const code = new URLSearchParams(window.location.search).get("code");
+      const roblox_id = localStorage.getItem("roblox_id");
+
+      if (!code || !roblox_id) {
+        document.body.innerHTML = "<p>Missing data.</p>";
+        throw new Error("Missing data");
+      }
+
+      fetch("/.netlify/functions/exchange?platform=discord&code=" + code + "&roblox_id=" + roblox_id)
+        .then(r => r.json())
+        .then(() => {
+          document.body.innerHTML = "<h2>✅ Successfully linked Roblox & Discord!</h2>";
+        })
+        .catch(err => {
+          document.body.innerHTML = "<p>Discord authorization failed.</p>";
+          console.error(err);
+        });
+    </script>
+  </body>
+</html>
